@@ -202,6 +202,40 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Shopkeeper Specific State
+  bool _isShopProfileComplete = false;
+  String _shopName = 'Your Shop Name';
+  String _shopLocation = 'Your Location';
+  String _shopDescription = 'Update your shop description to attract more customers.';
+  String _shopLicenseNumber = '';
+  String _bankAccountNumber = '';
+  double _shopRevenue = 45200.0;
+
+  bool get isShopProfileComplete => _isShopProfileComplete;
+  String get shopName => _shopName;
+  String get shopLocation => _shopLocation;
+  String get shopDescription => _shopDescription;
+  String get shopLicenseNumber => _shopLicenseNumber;
+  String get bankAccountNumber => _bankAccountNumber;
+  double get shopRevenue => _shopRevenue;
+
+  void updateShopProfile(String name, String location, String description, String license, String account) {
+    _shopName = name;
+    _shopLocation = location;
+    _shopDescription = description;
+    _shopLicenseNumber = license;
+    _bankAccountNumber = account;
+    _isShopProfileComplete = true;
+    notifyListeners();
+  }
+
+  void withdrawFunds(double amount) {
+    if (_shopRevenue >= amount) {
+      _shopRevenue -= amount;
+      notifyListeners();
+    }
+  }
+
   // Marketplace State
   final List<Product> _marketplaceProducts = [
     Product(id: 'p1', name: 'Premium Synthetic Engine Oil (5W-30)', price: 45.0, originalPrice: 60.0, iconName: 'water_drop', shopkeeperId: 'shop1', category: 'Auto'),
@@ -216,10 +250,38 @@ class AppState extends ChangeNotifier {
   
   List<Product> get marketplaceProducts => _marketplaceProducts;
   List<ShopOrder> get shopOrders => _shopOrders;
+
+  void addProduct(Product product) {
+    _marketplaceProducts.add(product);
+    notifyListeners();
+  }
+
+  void removeProduct(String id) {
+    _marketplaceProducts.removeWhere((p) => p.id == id);
+    notifyListeners();
+  }
+
+  void updateProductPrice(String id, double newPrice) {
+    final index = _marketplaceProducts.indexWhere((p) => p.id == id);
+    if (index != -1) {
+      final old = _marketplaceProducts[index];
+      _marketplaceProducts[index] = Product(
+        id: old.id,
+        name: old.name,
+        price: newPrice,
+        originalPrice: old.originalPrice,
+        iconName: old.iconName,
+        shopkeeperId: old.shopkeeperId,
+        category: old.category,
+      );
+      notifyListeners();
+    }
+  }
+
   
   String placeShopOrder(Product product, int quantity) {
-    // Generate a random 6 character code
-    final code = 'TX-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
+    // Generate a 6-digit code
+    final code = (100000 + (DateTime.now().millisecondsSinceEpoch % 900000)).toString();
     final order = ShopOrder(
       orderId: 'ORD-${DateTime.now().millisecondsSinceEpoch}',
       product: product,

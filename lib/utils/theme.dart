@@ -9,5 +9,5 @@ class AppColors {
   static const Color silverPrimary = Color(0xFFC0C0C0);
   static const Color silverBackground = Color(0xFF1E1E24);
   static const Color silverSurface = Color(0xFF2A2A35);
-  static const Color ambientNeon = Color(0xFF00FFCC); // Cyan/Silver ambient glow
+  static const Color ambientNeon = Color(0xFF00A2FF); // Electric Blue/Silver ambient glow
 }

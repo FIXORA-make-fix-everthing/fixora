@@ -33,9 +33,10 @@ class _CustomerHomeState extends State<CustomerHome> {
 
     final List<Widget> tabs = [
       _buildHomeTab(context, userName, appState),
-      const MarketplaceScreen(),
-      _buildBookingsTab(context, appState),
-      _buildProfileTab(context, userName, appState),
+      _buildOrdersTab(context, appState), // Index 1: Orders
+      const MarketplaceScreen(),          // Index 2: Store
+      _buildBookingsTab(context, appState), // Index 3: Bookings
+      _buildProfileTab(context, userName, appState), // Index 4: Profile
     ];
 
     return PopScope(
@@ -45,55 +46,67 @@ class _CustomerHomeState extends State<CustomerHome> {
         body: SafeArea(
           child: tabs[_currentIndex],
         ),
-        floatingActionButton: Transform.translate(
-          offset: const Offset(0, 10),
-          child: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFF151515),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFF5A00).withValues(alpha: 0.6),
-                  blurRadius: 15,
-                  spreadRadius: 2,
-                ),
-              ],
-              border: Border.all(
-                color: const Color(0xFFFF5A00),
-                width: 2,
+        bottomNavigationBar: Container(
+          margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+          height: 65,
+          decoration: BoxDecoration(
+            color: const Color(0xFF151515).withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: const Color(0xFFFF5A00).withValues(alpha: 0.2), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF5A00).withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 5),
               ),
-            ),
-            child: FloatingActionButton(
-              onPressed: () {
-                setState(() {
-                  _currentIndex = 1;
-                });
-              },
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              child: const Icon(Icons.storefront, color: Color(0xFFFF5A00), size: 28),
-            ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildNavItem(0, Icons.explore_outlined, Icons.explore, 'Explore'),
+              _buildNavItem(1, Icons.shopping_bag_outlined, Icons.shopping_bag, 'Orders'),
+              _buildCenterStoreItem(),
+              _buildNavItem(3, Icons.receipt_long_outlined, Icons.receipt_long, 'Bookings'),
+              _buildNavItem(4, Icons.person_outline_rounded, Icons.person_rounded, 'Profile'),
+            ],
           ),
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        bottomNavigationBar: BottomAppBar(
-          color: const Color(0xFF141414),
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 8.0,
-          child: SizedBox(
-            height: 60,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(0, Icons.explore_outlined, Icons.explore, 'Explore'),
-                const SizedBox(width: 40), // Space for FAB
-                _buildNavItem(2, Icons.receipt_long_outlined, Icons.receipt_long, 'Bookings'),
-                _buildNavItem(3, Icons.person_outline_rounded, Icons.person_rounded, 'Profile'),
-              ],
-            ),
+      ),
+    );
+  }
+
+  Widget _buildCenterStoreItem() {
+    final isSelected = _currentIndex == 2;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _currentIndex = 2;
+        });
+      },
+      child: Container(
+        width: 55,
+        height: 55,
+        margin: const EdgeInsets.only(bottom: 5), // Slight lift
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isSelected ? const Color(0xFFFF5A00) : const Color(0xFF1E1E1E),
+          border: Border.all(
+            color: const Color(0xFFFF5A00),
+            width: 2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFF5A00).withValues(alpha: isSelected ? 0.6 : 0.3),
+              blurRadius: 15,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Icon(
+          Icons.storefront, 
+          color: isSelected ? Colors.white : const Color(0xFFFF5A00), 
+          size: 32,
         ),
       ),
     );
@@ -109,21 +122,24 @@ class _CustomerHomeState extends State<CustomerHome> {
         });
       },
       behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(isSelected ? activeIcon : outlineIcon, color: color, size: 24),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.outfit(
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              color: color,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(isSelected ? activeIcon : outlineIcon, color: color, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: color,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -498,6 +514,155 @@ class _CustomerHomeState extends State<CustomerHome> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // --- ORDERS TAB ---
+  Widget _buildOrdersTab(BuildContext context, AppState appState) {
+    final customerId = appState.currentUserEmail ?? 'tech_1';
+    final customerOrders = appState.shopOrders.where((o) => o.technicianId == customerId).toList();
+
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'MY ORDERS',
+            style: GoogleFonts.outfit(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2,
+              color: const Color(0xFFFF5A00),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Store Purchases',
+            style: GoogleFonts.outfit(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: customerOrders.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.inventory_2_outlined, color: Colors.grey[850], size: 60),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No Store Orders',
+                          style: GoogleFonts.outfit(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Your marketplace purchases will appear here.',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w300,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: customerOrders.length,
+                    itemBuilder: (context, index) {
+                      final order = customerOrders[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF151515),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: order.isCollected
+                                ? Colors.green.withValues(alpha: 0.3)
+                                : const Color(0xFFFF5A00).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  order.orderId,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    color: Colors.white54,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: order.isCollected
+                                        ? Colors.green.withValues(alpha: 0.1)
+                                        : const Color(0xFFFF5A00).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    order.isCollected ? 'COLLECTED' : 'PENDING',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: order.isCollected ? Colors.green : const Color(0xFFFF5A00),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              order.product.name,
+                              style: GoogleFonts.outfit(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Qty: ${order.quantity}',
+                                  style: GoogleFonts.outfit(color: Colors.white70),
+                                ),
+                                Text(
+                                  appState.formatPrice(order.product.price * order.quantity),
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFFFF5A00),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (!order.isCollected) ...[
+                              const Divider(color: Colors.white10, height: 24),
+                              const SizedBox(height: 12),
+                              _CollectionCodeView(collectionCode: order.collectionCode),
+                            ]
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
     );
   }
@@ -1068,6 +1233,63 @@ class _CustomerHomeState extends State<CustomerHome> {
             Icon(Icons.chevron_right_rounded, color: isLogout ? const Color(0xFFFF3333).withValues(alpha: 0.5) : Colors.white30, size: 22),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CollectionCodeView extends StatefulWidget {
+  final String collectionCode;
+  const _CollectionCodeView({required this.collectionCode});
+
+  @override
+  State<_CollectionCodeView> createState() => _CollectionCodeViewState();
+}
+
+class _CollectionCodeViewState extends State<_CollectionCodeView> {
+  bool _showCode = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _showCode = !_showCode;
+        });
+      },
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Collection Code:',
+            style: GoogleFonts.outfit(color: Colors.white70),
+          ),
+          _showCode
+              ? Text(
+                  widget.collectionCode,
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                    color: const Color(0xFFFF5A00),
+                  ),
+                )
+              : Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF5A00).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'TAP TO SHOW',
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFFFF5A00),
+                    ),
+                  ),
+                ),
+        ],
       ),
     );
   }

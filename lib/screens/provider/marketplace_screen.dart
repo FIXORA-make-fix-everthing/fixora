@@ -14,6 +14,8 @@ class MarketplaceScreen extends StatefulWidget {
 class _MarketplaceScreenState extends State<MarketplaceScreen> {
   final Color darkBackground = const Color(0xFF0F0F0F);
   final Color darkSurface = const Color(0xFF141414);
+  String _selectedCategory = 'All';
+
 
   @override
   Widget build(BuildContext context) {
@@ -158,6 +160,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   Widget _buildCategorySection(Color themeColor) {
     final categories = [
+      {'name': 'All', 'icon': Icons.grid_view},
       {'name': 'Engine Oil', 'icon': Icons.water_drop},
       {'name': 'Brake Parts', 'icon': Icons.stop_circle_outlined},
       {'name': 'Tyres', 'icon': Icons.tire_repair},
@@ -197,25 +200,34 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: categories.length,
             itemBuilder: (context, index) {
-              return Container(
-                width: 70,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: darkSurface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: themeColor.withValues(alpha: 0.15)),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(categories[index]['icon'] as IconData, color: Colors.white70, size: 30),
-                    const SizedBox(height: 8),
-                    Text(
-                      categories[index]['name'] as String,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.white70),
-                    ),
-                  ],
+              final categoryName = categories[index]['name'] as String;
+              final isSelected = _selectedCategory == categoryName;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedCategory = categoryName;
+                  });
+                },
+                child: Container(
+                  width: 70,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: isSelected ? themeColor.withValues(alpha: 0.2) : darkSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: isSelected ? themeColor : themeColor.withValues(alpha: 0.15)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(categories[index]['icon'] as IconData, color: isSelected ? themeColor : Colors.white70, size: 30),
+                      const SizedBox(height: 8),
+                      Text(
+                        categoryName,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.outfit(fontSize: 10, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, color: isSelected ? themeColor : Colors.white70),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -226,6 +238,23 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Widget _buildPopularPartsSection(List<Product> products, AppState appState, Color themeColor) {
+    List<Product> displayedProducts = products;
+    if (_selectedCategory != 'All') {
+      if (_selectedCategory == 'Engine Oil') {
+        displayedProducts = products.where((p) => p.name.toLowerCase().contains('oil') || p.iconName == 'water_drop').toList();
+      } else if (_selectedCategory == 'Brake Parts') {
+        displayedProducts = products.where((p) => p.name.toLowerCase().contains('brake') || p.iconName == 'car_repair').toList();
+      } else if (_selectedCategory == 'Battery') {
+        displayedProducts = products.where((p) => p.iconName == 'battery_charging_full').toList();
+      } else if (_selectedCategory == 'Tools') {
+        displayedProducts = products.where((p) => p.iconName == 'build').toList();
+      } else if (_selectedCategory == 'Bike Spares' || _selectedCategory == 'Car Spares') {
+        displayedProducts = products.where((p) => p.category == 'Auto').toList();
+      } else {
+        displayedProducts = []; 
+      }
+    }
+
     return Column(
       children: [
         Padding(
@@ -258,9 +287,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
-            itemCount: products.length,
+            itemCount: displayedProducts.length,
             itemBuilder: (context, index) {
-              return _buildProductCard(products[index], appState, themeColor);
+              return _buildProductCard(displayedProducts[index], appState, themeColor);
             },
           ),
         ),

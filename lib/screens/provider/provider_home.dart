@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_state.dart';
 import '../auth_selection_screen.dart';
@@ -11,6 +13,7 @@ import 'business_details_screen.dart';
 import 'edit_profile_screen.dart';
 import 'live_location_screen.dart';
 import 'marketplace_screen.dart';
+import 'my_orders_screen.dart';
 
 class ProviderHome extends StatefulWidget {
   const ProviderHome({super.key});
@@ -21,6 +24,8 @@ class ProviderHome extends StatefulWidget {
 
 class _ProviderHomeState extends State<ProviderHome> {
   int _currentIndex = 0;
+  XFile? _pickedIdProof;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   Widget build(BuildContext context) {
@@ -50,60 +55,51 @@ class _ProviderHomeState extends State<ProviderHome> {
             ],
           ),
         ),
-        floatingActionButton: Transform.translate(
-          offset: const Offset(0, 10),
-          child: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFF151515),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.goldSilkS.withValues(alpha: 0.6),
-                  blurRadius: 15,
-                  spreadRadius: 2,
-                ),
-              ],
-              border: Border.all(
-                color: AppColors.goldSilkS,
-                width: 2,
-              ),
-            ),
-            child: FloatingActionButton(
-              onPressed: () {
-                setState(() {
-                  _currentIndex = 2;
-                });
-              },
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              child: const Icon(Icons.storefront, color: AppColors.goldSilkS, size: 28),
-            ),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF151515).withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 20)],
           ),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        bottomNavigationBar: BottomAppBar(
-          color: const Color(0xFF141414),
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 8.0,
-          child: SizedBox(
-            height: 60,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(0, Icons.dashboard_customize_outlined, Icons.dashboard_customize, 'Jobs'),
-                _buildNavItem(1, Icons.assignment_turned_in_outlined, Icons.assignment_turned_in, 'Tasks'),
-                const SizedBox(width: 40), // Space for FAB
-                _buildNavItem(3, Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, 'Earnings'),
-                _buildNavItem(4, Icons.badge_outlined, Icons.badge, 'Profile'),
-              ],
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildNavItem(0, Icons.dashboard_customize_outlined, Icons.dashboard_customize, 'Jobs'),
+              _buildNavItem(1, Icons.assignment_turned_in_outlined, Icons.assignment_turned_in, 'Tasks'),
+              
+              // Center Marketplace Button
+              GestureDetector(
+                onTap: () => setState(() => _currentIndex = 2),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFE5C07B), Color(0xFFC5A059)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(color: AppColors.goldSilkS.withValues(alpha: 0.4), blurRadius: 10, spreadRadius: 2),
+                    ],
+                  ),
+                  child: const Icon(Icons.storefront, color: Colors.black, size: 28),
+                ),
+              ),
+
+              _buildNavItem(3, Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, 'Earnings'),
+              _buildNavItem(4, Icons.badge_outlined, Icons.badge, 'Profile'),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildNavItem(int index, IconData outlineIcon, IconData activeIcon, String label) {
     final isSelected = _currentIndex == index;
@@ -181,6 +177,72 @@ class _ProviderHomeState extends State<ProviderHome> {
             const Icon(Icons.chevron_right_rounded, color: Colors.black),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showIncompleteProfileAlert(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF141414),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: const Color(0xFFC5A059).withValues(alpha: 0.3)),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            const SizedBox(width: 10),
+            Text(
+              'Profile Incomplete',
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'You must complete your proper registration profile before you can go online or accept customer jobs.',
+          style: GoogleFonts.outfit(
+            color: Colors.grey[400],
+            fontSize: 14,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.outfit(color: Colors.grey[500]),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ProviderRegistrationScreen(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC5A059),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              'Complete Registration',
+              style: GoogleFonts.outfit(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -280,7 +342,13 @@ class _ProviderHomeState extends State<ProviderHome> {
             children: [
               // Online/Offline switch
               GestureDetector(
-                onTap: () => appState.toggleProviderOnline(),
+                onTap: () {
+                  if (!appState.isProviderRegistrationComplete) {
+                    _showIncompleteProfileAlert(context);
+                    return;
+                  }
+                  appState.toggleProviderOnline();
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   width: 105,
@@ -335,7 +403,13 @@ class _ProviderHomeState extends State<ProviderHome> {
               const SizedBox(height: 8),
               // GPS Tracking switch
               GestureDetector(
-                onTap: () => appState.toggleGpsTracking(),
+                onTap: () {
+                  if (!appState.isProviderRegistrationComplete) {
+                    _showIncompleteProfileAlert(context);
+                    return;
+                  }
+                  appState.toggleGpsTracking();
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   width: 105,
@@ -1517,6 +1591,98 @@ class _ProviderHomeState extends State<ProviderHome> {
             ),
             const SizedBox(height: 28),
 
+            // ID Proof Section
+            Text(
+              'IDENTITY VERIFICATION',
+              style: GoogleFonts.outfit(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.5,
+                color: const Color(0xFFC5A059),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF141414),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: const Color(0xFFC5A059).withValues(alpha: 0.12),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: _pickedIdProof != null ? 80 : 50,
+                    height: _pickedIdProof != null ? 60 : 50,
+                    decoration: BoxDecoration(
+                      color: _pickedIdProof != null ? Colors.green.withValues(alpha: 0.1) : const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: _pickedIdProof != null ? Colors.green : Colors.white10),
+                      image: _pickedIdProof != null 
+                        ? DecorationImage(image: FileImage(File(_pickedIdProof!.path)), fit: BoxFit.cover)
+                        : null,
+                    ),
+                    child: _pickedIdProof == null 
+                      ? const Icon(Icons.add_a_photo_outlined, color: Colors.white54)
+                      : null,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _pickedIdProof != null ? 'ID Proof Uploaded' : 'Upload ID Proof Photo',
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: _pickedIdProof != null ? Colors.green : Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Aadhar, Driver License, or Passport',
+                          style: GoogleFonts.outfit(
+                            fontSize: 11,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  OutlinedButton(
+                    onPressed: () async {
+                      try {
+                        final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) {
+                          setState(() {
+                            _pickedIdProof = image;
+                          });
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to open gallery: $e'), backgroundColor: Colors.red));
+                        }
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: _pickedIdProof != null ? Colors.green : const Color(0xFFC5A059)),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: Text(
+                      _pickedIdProof != null ? 'CHANGE' : 'UPLOAD',
+                      style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w600, color: _pickedIdProof != null ? Colors.green : const Color(0xFFC5A059)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 28),
+
             // Profile actions menu
             _buildProfileMenuItem(
               context,
@@ -1527,6 +1693,19 @@ class _ProviderHomeState extends State<ProviderHome> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const EditProfileScreen(),
+                  ),
+                );
+              },
+            ),
+            _buildProfileMenuItem(
+              context,
+              Icons.inventory_2_rounded,
+              'My Orders',
+              'View your marketplace purchases and collection codes',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const MyOrdersScreen(),
                   ),
                 );
               },

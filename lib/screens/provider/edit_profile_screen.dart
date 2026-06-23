@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -10,6 +12,8 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   bool isEditing = false;
+  XFile? _pickedProfilePhoto;
+  final ImagePicker _picker = ImagePicker();
 
   final TextEditingController _nameController = TextEditingController(text: "Alex Mercer");
   final TextEditingController _phoneController = TextEditingController(text: "+1 (555) 987-6543");
@@ -69,34 +73,53 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-              child: Stack(
-                children: [
-                  Container(
-                    height: 100,
-                    width: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFC5A059), width: 2),
-                      image: const DecorationImage(
-                        image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  if (isEditing)
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFC5A059),
-                          shape: BoxShape.circle,
+              child: InkWell(
+                onTap: isEditing ? () async {
+                  try {
+                    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+                    if (image != null) {
+                      setState(() {
+                        _pickedProfilePhoto = image;
+                      });
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to open gallery: $e'), backgroundColor: Colors.red));
+                    }
+                  }
+                } : null,
+                borderRadius: BorderRadius.circular(50),
+                child: Stack(
+                  children: [
+                    Container(
+                      height: 100,
+                      width: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: _pickedProfilePhoto != null ? Colors.green : const Color(0xFFC5A059), width: 2),
+                        image: DecorationImage(
+                          image: _pickedProfilePhoto != null 
+                            ? FileImage(File(_pickedProfilePhoto!.path)) as ImageProvider
+                            : const NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80'),
+                          fit: BoxFit.cover,
                         ),
-                        child: const Icon(Icons.camera_alt, color: Colors.black, size: 16),
                       ),
                     ),
-                ],
+                    if (isEditing)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFC5A059),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.camera_alt, color: Colors.black, size: 16),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 32),

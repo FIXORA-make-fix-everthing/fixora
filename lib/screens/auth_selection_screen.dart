@@ -18,7 +18,6 @@ class AuthSelectionScreen extends StatefulWidget {
 class _AuthSelectionScreenState extends State<AuthSelectionScreen> with SingleTickerProviderStateMixin {
   UserRole _selectedRole = UserRole.customer;
   UserRole? _pressedRole; // Track pressed state for electric blue effect
-  bool _isLoginPressed = false; // Track pressed state for electric green effect on login
   
   late AnimationController _animationController;
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -218,7 +217,7 @@ class _AuthSelectionScreenState extends State<AuthSelectionScreen> with SingleTi
                     
                     // Shopkeeper Card
                     _buildAnimatedItem(
-                      index: 4, totalItems: 8,
+                      index: 4, totalItems: 7,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 24),
                         child: _buildSelectionCard(
@@ -232,7 +231,7 @@ class _AuthSelectionScreenState extends State<AuthSelectionScreen> with SingleTi
                     
                     // Divider "New here?"
                     _buildAnimatedItem(
-                      index: 5, totalItems: 8,
+                      index: 5, totalItems: 7,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: Row(
@@ -253,7 +252,7 @@ class _AuthSelectionScreenState extends State<AuthSelectionScreen> with SingleTi
                     
                     // Create an Account Button
                     _buildAnimatedItem(
-                      index: 6, totalItems: 8,
+                      index: 6, totalItems: 7,
                       child: GestureDetector(
                         onTap: _navigateToSignUp,
                         child: Container(
@@ -288,53 +287,6 @@ class _AuthSelectionScreenState extends State<AuthSelectionScreen> with SingleTi
                         ),
                       ),
                     ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Login button at bottom
-                    _buildAnimatedItem(
-                      index: 7, totalItems: 8,
-                      child: GestureDetector(
-                        onTapDown: (_) => setState(() => _isLoginPressed = true),
-                        onTapCancel: () => setState(() => _isLoginPressed = false),
-                        onTapUp: (_) {
-                          setState(() => _isLoginPressed = false);
-                          _navigateToLogin();
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: _isLoginPressed ? const Color(0xFF39FF14) : const Color(0xFFFF5A00), 
-                              width: _isLoginPressed ? 2 : 1.5
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            color: _isLoginPressed ? const Color(0xFF39FF14).withValues(alpha: 0.1) : Colors.transparent,
-                            boxShadow: _isLoginPressed
-                                ? [
-                                    BoxShadow(
-                                      color: const Color(0xFF39FF14).withValues(alpha: 0.6),
-                                      blurRadius: 20,
-                                      spreadRadius: 2,
-                                    )
-                                  ]
-                                : [],
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Login',
-                              style: GoogleFonts.outfit(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: _isLoginPressed ? const Color(0xFF39FF14) : const Color(0xFFFF5A00),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -363,6 +315,7 @@ class _AuthSelectionScreenState extends State<AuthSelectionScreen> with SingleTi
           _pressedRole = null;
           _selectedRole = role;
         });
+        _navigateToLogin();
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
