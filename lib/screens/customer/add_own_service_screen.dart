@@ -198,25 +198,56 @@ class _AddOwnServiceScreenState extends State<AddOwnServiceScreen> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.3)),
                   ),
-                  child: Row(
+                  child: _imageFile != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Stack(
+                            alignment: Alignment.topRight,
+                            children: [
+                              Image.file(
+                                _imageFile!,
+                                height: 200,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _imageFile = null;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.6),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, color: Colors.white, size: 18),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
-                          _imageFile != null 
-                              ? _imageFile!.path.split('/').last 
-                              : 'Upload picture (Optional)',
+                          'Upload picture (Optional)',
                           style: GoogleFonts.outfit(
-                            color: _imageFile != null ? Colors.white : Colors.white60,
+                            color: Colors.white60,
                             fontSize: 16,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Icon(
-                        _imageFile != null ? Icons.check_circle_rounded : Icons.camera_alt_outlined, 
-                        color: _imageFile != null ? const Color(0xFF00E5FF) : Colors.white60
+                      const Icon(
+                        Icons.camera_alt_outlined, 
+                        color: Colors.white60
                       ),
                     ],
                   ),

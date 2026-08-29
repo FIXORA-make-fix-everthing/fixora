@@ -69,11 +69,12 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
           // Centered Logo Image
           Positioned.fill(
             child: Center(
-              child: Image.asset(
-                'assets/images/image.png',
-                width: 700,
-                height: 900,
-                fit: BoxFit.contain,
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Image.asset(
+                  'assets/images/image.png',
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),

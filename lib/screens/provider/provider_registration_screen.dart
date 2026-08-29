@@ -505,7 +505,7 @@ class _ProviderRegistrationScreenState extends State<ProviderRegistrationScreen>
                             _isGpsEnabled = val;
                           });
                         },
-                        activeColor: AppColors.goldSilkS,
+                        activeThumbColor: AppColors.goldSilkS,
                         activeTrackColor: AppColors.goldSilkS.withValues(alpha: 0.3),
                         inactiveThumbColor: Colors.grey[400],
                         inactiveTrackColor: Colors.grey[800],

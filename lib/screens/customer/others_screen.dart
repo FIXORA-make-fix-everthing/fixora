@@ -7,9 +7,9 @@ import 'problem_description_screen.dart';
 
 class OtherItem {
   final String name;
-  final IconData icon;
+  final String imagePath;
 
-  OtherItem(this.name, this.icon);
+  OtherItem(this.name, this.imagePath);
 }
 
 class OthersScreen extends StatefulWidget {
@@ -23,14 +23,14 @@ class _OthersScreenState extends State<OthersScreen> {
   int _selectedIndex = -1;
 
   final List<OtherItem> othersItems = [
-    OtherItem('Plumbing', Icons.plumbing_rounded),
-    OtherItem('Cleaning', Icons.cleaning_services_rounded),
-    OtherItem('Electrician', Icons.power_rounded),
-    OtherItem('CCTV', Icons.camera_outdoor_rounded),
-    OtherItem('Gas stove', Icons.local_fire_department_rounded),
-    OtherItem('Trimming', Icons.content_cut_rounded),
-    OtherItem('Acting driver', Icons.drive_eta_rounded),
-    OtherItem('Painting', Icons.format_paint_rounded),
+    OtherItem('Plumbing', 'assets/images/others/plumbing_3d.png'),
+    OtherItem('Cleaning', 'assets/images/others/cleaning_3d.png'),
+    OtherItem('Electrician', 'assets/images/others/electrician_3d.png'),
+    OtherItem('CCTV', 'assets/images/others/cctv_3d.png'),
+    OtherItem('Gas stove', 'assets/images/others/gas_stove_3d.png'),
+    OtherItem('Trimming', 'assets/images/others/trimming_3d.png'),
+    OtherItem('Acting driver', 'assets/images/others/acting_driver_3d.png'),
+    OtherItem('Painting', 'assets/images/others/painting_3d.png'),
   ];
 
   @override
@@ -147,12 +147,12 @@ class _OthersScreenState extends State<OthersScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            item.icon,
-                            size: 48,
-                            color: isSelected 
-                                ? const Color(0xFF39FF14) // Electric green icon when selected
-                                : Colors.white,
+                          Image.asset(
+                            item.imagePath,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.contain,
+                            color: isSelected ? const Color(0xFF39FF14) : null,
                           ),
                           const SizedBox(height: 12),
                           Text(

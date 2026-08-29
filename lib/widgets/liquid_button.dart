@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-
+import 'dart:ui';
 class LiquidButton extends StatefulWidget {
   final Widget child;
   final VoidCallback onPressed;
@@ -71,73 +71,64 @@ class _LiquidButtonState extends State<LiquidButton> with SingleTickerProviderSt
           height: 60,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30),
-            color: const Color(0xFFD1D1D1), // Silver background for the pill
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFFFF9E5E).withValues(alpha: 0.95), // Light orange matte
+                const Color(0xFFFF7043).withValues(alpha: 0.85), // Deep orange matte glass
+              ],
+            ),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.4),
+              width: 1.5,
+            ),
             boxShadow: [
-              // Colorful ambient light effect at the edges
+              // Vibrant orange glow
               BoxShadow(
-                color: const Color(0xFFFF9800).withValues(alpha: 0.6), // Orange glow
-                blurRadius: 20,
+                color: const Color(0xFFFF7043).withValues(alpha: 0.6),
+                blurRadius: 25,
                 spreadRadius: 2,
-                offset: const Offset(-3, 3),
-              ),
-              BoxShadow(
-                color: const Color(0xFF00E5FF).withValues(alpha: 0.4), // Cyan/Blue glow
-                blurRadius: 20,
-                spreadRadius: 2,
-                offset: const Offset(3, -3),
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(30),
-            child: Stack(
-              children: [
-                // Liquid / Slanted orange gradient
-                Positioned(
-                  left: -20,
-                  top: 0,
-                  bottom: 0,
-                  width: 200,
-                  child: Transform(
-                    transform: Matrix4.skewX(-0.3),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Stack(
+                children: [
+                  // Content (Text and Arrow)
+                  Center(
+                    child: widget.child,
+                  ),
+
+                  // Glassy water reflection on top
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 28,
                     child: Container(
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                           colors: [
-                            Color(0xFFFFB74D), // Light Orange
-                            Color(0xFFFF7043), // Deep Orange
+                            Colors.white.withValues(alpha: 0.4),
+                            Colors.white.withValues(alpha: 0.0),
                           ],
+                        ),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(30),
+                          topRight: Radius.circular(30),
                         ),
                       ),
                     ),
                   ),
-                ),
-                
-                // Content (Text and Arrow)
-                Center(
-                  child: widget.child,
-                ),
-
-                // Glassy reflection on top
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 30,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white.withValues(alpha: 0.3),
-                          Colors.white.withValues(alpha: 0.0),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

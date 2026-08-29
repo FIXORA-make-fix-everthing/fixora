@@ -366,19 +366,19 @@ class _CustomerHomeState extends State<CustomerHome> {
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  _buildSpecialCard(context, 'Car Puncture', Icons.tire_repair, const Color(0xFF00E5FF)),
-                  _buildSpecialCard(context, 'Car Breakdown', Icons.car_crash_rounded, const Color(0xFFFF5A00)),
-                  _buildSpecialCard(context, 'Fan Repair &\nInstall', Icons.mode_fan_off_rounded, const Color(0xFF39FF14)),
-                  _buildSpecialCard(context, 'House\nShifting', Icons.local_shipping_rounded, const Color(0xFFFF00FF)),
+                  _buildSpecialCard(context, 'Car Puncture', 'assets/images/3d_icons/car_puncture.png', const Color(0xFF00E5FF)),
+                  _buildSpecialCard(context, 'Car Breakdown', 'assets/images/3d_icons/car_breakdown.png', const Color(0xFFFF5A00)),
+                  _buildSpecialCard(context, 'Fan Repair &\nInstall', 'assets/images/3d_icons/fan_repair.png', const Color(0xFF39FF14)),
+                  _buildSpecialCard(context, 'House\nShifting', 'assets/images/3d_icons/house_shifting.png', const Color(0xFFFF00FF)),
                 ],
               ),
             ),
             const SizedBox(height: 32),
 
             // New Simplified Category Layout
-            _buildCategoryListButton(context, 0, 'Home appliances', Icons.home_rounded),
-            _buildCategoryListButton(context, 1, 'Vehicle', Icons.directions_car_rounded),
-            _buildCategoryListButton(context, 2, 'Others', Icons.category_rounded),
+            _buildCategoryListButton(context, 0, 'Home appliances', 'assets/images/appliances/washing_machine_3d.png'),
+            _buildCategoryListButton(context, 1, 'Vehicle', 'assets/images/vehicles/car_3d.png'),
+            _buildCategoryListButton(context, 2, 'Others', 'assets/images/others/cleaning_3d.png'),
             const SizedBox(height: 40),
           ],
         ),
@@ -386,7 +386,7 @@ class _CustomerHomeState extends State<CustomerHome> {
     );
   }
 
-  Widget _buildSpecialCard(BuildContext context, String title, IconData icon, Color color) {
+  Widget _buildSpecialCard(BuildContext context, String title, String imagePath, Color color) {
     return Container(
       width: 120,
       margin: const EdgeInsets.only(right: 16),
@@ -412,7 +412,7 @@ class _CustomerHomeState extends State<CustomerHome> {
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => OnSpotBookingScreen(serviceName: title.replaceAll('\\n', ' ')),
+                builder: (context) => OnSpotBookingScreen(serviceName: title.replaceAll('\n', ' ')),
               ),
             );
           },
@@ -422,12 +422,12 @@ class _CustomerHomeState extends State<CustomerHome> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: color, size: 30),
+                  child: Image.asset(imagePath, width: 35, height: 35, fit: BoxFit.contain),
                 ),
                 const SizedBox(height: 14),
                 Text(
@@ -448,7 +448,7 @@ class _CustomerHomeState extends State<CustomerHome> {
     );
   }
 
-  Widget _buildCategoryListButton(BuildContext context, int index, String title, IconData icon) {
+  Widget _buildCategoryListButton(BuildContext context, int index, String title, String imagePath) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -497,7 +497,7 @@ class _CustomerHomeState extends State<CustomerHome> {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Row(
               children: [
-                Icon(icon, color: const Color(0xFF00E5FF), size: 36),
+                Image.asset(imagePath, width: 36, height: 36, fit: BoxFit.contain),
                 const SizedBox(width: 20),
                 Expanded(
                   child: Text(

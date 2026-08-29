@@ -6,9 +6,9 @@ import 'problem_description_screen.dart';
 
 class ApplianceItem {
   final String name;
-  final IconData icon;
+  final String imagePath;
 
-  ApplianceItem(this.name, this.icon);
+  ApplianceItem(this.name, this.imagePath);
 }
 
 class HomeAppliancesScreen extends StatefulWidget {
@@ -22,16 +22,16 @@ class _HomeAppliancesScreenState extends State<HomeAppliancesScreen> {
   int _selectedIndex = -1;
 
   final List<ApplianceItem> appliances = [
-    ApplianceItem('Refrigerator', Icons.kitchen_rounded),
-    ApplianceItem('Television', Icons.tv_rounded),
-    ApplianceItem('Air cooler', Icons.ac_unit_rounded),
-    ApplianceItem('Mixer grinder', Icons.blender_rounded),
-    ApplianceItem('Microwave', Icons.microwave_rounded),
-    ApplianceItem('Dishwasher', Icons.wash_rounded),
-    ApplianceItem('Washing Machine', Icons.local_laundry_service_rounded),
-    ApplianceItem('Ceiling Fan', Icons.wind_power_rounded),
-    ApplianceItem('Vacuum Cleaner', Icons.cleaning_services_rounded),
-    ApplianceItem('Speaker', Icons.speaker_rounded),
+    ApplianceItem('Refrigerator', 'assets/images/appliances/refrigerator_3d.png'),
+    ApplianceItem('Television', 'assets/images/appliances/television_3d.png'),
+    ApplianceItem('Air cooler', 'assets/images/appliances/air_cooler_3d.png'),
+    ApplianceItem('Mixer grinder', 'assets/images/appliances/mixer_grinder_3d.png'),
+    ApplianceItem('Microwave', 'assets/images/appliances/microwave_3d.png'),
+    ApplianceItem('Dishwasher', 'assets/images/appliances/dishwasher_3d.png'),
+    ApplianceItem('Washing Machine', 'assets/images/appliances/washing_machine_3d.png'),
+    ApplianceItem('Ceiling Fan', 'assets/images/appliances/ceiling_fan_3d.png'),
+    ApplianceItem('Vacuum Cleaner', 'assets/images/appliances/vacuum_cleaner_3d.png'),
+    ApplianceItem('Speaker', 'assets/images/appliances/speaker_3d.png'),
   ];
 
   @override
@@ -85,40 +85,48 @@ class _HomeAppliancesScreenState extends State<HomeAppliancesScreen> {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isSelected 
-                            ? const Color(0xFF39FF14).withValues(alpha: 0.1) // Transparent electric green
+                        color: isSelected
+                            ? const Color(0xFF39FF14).withValues(
+                                alpha: 0.1,
+                              ) // Transparent electric green
                             : const Color(0xFF151515),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isSelected 
+                          color: isSelected
                               ? const Color(0xFF39FF14) // Electric green border
-                              : const Color(0xFFFF5A00).withValues(alpha: 0.1), // Orange subtle border
+                              : const Color(0xFFFF5A00).withValues(
+                                  alpha: 0.1,
+                                ), // Orange subtle border
                           width: isSelected ? 1.5 : 1.0,
                         ),
                         boxShadow: [
                           if (isSelected)
                             BoxShadow(
-                              color: const Color(0xFF39FF14).withValues(alpha: 0.2),
+                              color: const Color(
+                                0xFF39FF14,
+                              ).withValues(alpha: 0.2),
                               blurRadius: 12,
                               spreadRadius: 2,
                             )
                           else
                             BoxShadow(
-                              color: const Color(0xFFFF5A00).withValues(alpha: 0.15),
+                              color: const Color(
+                                0xFFFF5A00,
+                              ).withValues(alpha: 0.15),
                               blurRadius: 15,
                               spreadRadius: 2,
-                            )
+                            ),
                         ],
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            item.icon,
-                            size: 48,
-                            color: isSelected 
-                                ? const Color(0xFF39FF14) // Electric green icon when selected
-                                : Colors.white,
+                          Image.asset(
+                            item.imagePath,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.contain,
+                            color: isSelected ? const Color(0xFF39FF14) : null,
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -127,7 +135,9 @@ class _HomeAppliancesScreenState extends State<HomeAppliancesScreen> {
                             style: GoogleFonts.outfit(
                               color: Colors.white,
                               fontSize: 14,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
                             ),
                           ),
                         ],
@@ -147,22 +157,33 @@ class _HomeAppliancesScreenState extends State<HomeAppliancesScreen> {
                   onPressed: () {
                     if (_selectedIndex != -1) {
                       // Navigate to BookServiceScreen with a generic or matched category
-                      final appState = Provider.of<AppState>(context, listen: false);
+                      final appState = Provider.of<AppState>(
+                        context,
+                        listen: false,
+                      );
                       final targetCat = appState.categories.firstWhere(
                         (cat) => cat.isHome,
                         orElse: () => appState.categories[0],
                       );
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => ProblemDescriptionScreen(category: targetCat),
+                          builder: (context) =>
+                              ProblemDescriptionScreen(category: targetCat),
                         ),
                       );
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF5A00).withValues(alpha: 0.15),
-                    side: const BorderSide(color: Color(0xFFFF5A00), width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: const Color(
+                      0xFFFF5A00,
+                    ).withValues(alpha: 0.15),
+                    side: const BorderSide(
+                      color: Color(0xFFFF5A00),
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 0,
                   ),
                   child: Text(

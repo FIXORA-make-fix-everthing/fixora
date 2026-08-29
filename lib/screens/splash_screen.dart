@@ -4,6 +4,14 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'language_selection_screen.dart';
 import '../utils/page_transitions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_state.dart';
+import '../models/user_model.dart';
+import 'customer/customer_home.dart';
+import 'provider/provider_home.dart';
+import 'shopkeeper/shopkeeper_home.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -27,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
     _videoController = VideoPlayerController.asset('assets/images/splash.mp4');
 
     try {
-      await _videoController.initialize();
+      await _videoController.initialize().timeout(const Duration(seconds: 4));
       if (!mounted) return;
 
       setState(() {
@@ -57,16 +65,49 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  void _navigateAway() {
+  Future<void> _navigateAway() async {
     if (_navigated || !mounted) return;
     _navigated = true;
 
     // Restore system UI
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-    Navigator.of(context).pushReplacement(
-      RollingPageRoute(page: const LanguageSelectionScreen()),
-    );
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final snap = await FirebaseDatabase.instance.ref('users').child(user.uid).get();
+        if (snap.exists && snap.value != null && mounted) {
+          final Map<String, dynamic> data = Map<String, dynamic>.from(snap.value as Map);
+          final userModel = UserModel.fromMap(data, user.uid);
+          context.read<AppState>().setUserModel(userModel);
+
+          Widget nextScreen;
+          switch (userModel.role) {
+            case UserRole.customer:
+              nextScreen = const CustomerHome();
+              break;
+            case UserRole.provider:
+              nextScreen = const ProviderHome();
+              break;
+            case UserRole.shopKeeper:
+              nextScreen = const ShopkeeperHome();
+              break;
+            default:
+              nextScreen = const LanguageSelectionScreen();
+          }
+          Navigator.of(context).pushReplacement(RollingPageRoute(page: nextScreen));
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Auto-login error: $e');
+    }
+
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        RollingPageRoute(page: const LanguageSelectionScreen()),
+      );
+    }
   }
 
   @override

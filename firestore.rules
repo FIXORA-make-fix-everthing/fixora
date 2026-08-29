@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if the caller is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if caller owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // Any authenticated user can read user profiles (e.g., customers seeing provider details)
+      allow read: if isAuthenticated();
+      // Users can only create or update their own profile document
+      allow create, update: if isOwner(userId);
+      // Users can delete their own profile document
+      allow delete: if isOwner(userId);
+    }
+
+    // Products Collection (Marketplace)
+    match /products/{productId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    // Bookings Collection
+    match /bookings/{bookingId} {
+      allow read, create, update: if isAuthenticated();
+    }
+  }
+}

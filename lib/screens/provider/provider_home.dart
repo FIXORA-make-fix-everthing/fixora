@@ -2172,7 +2172,8 @@ class _ProviderHomeState extends State<ProviderHome> {
                   // Biometrics Toggle
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    activeColor: const Color(0xFFC5A059),
+                    activeTrackColor: const Color(0xFFC5A059).withValues(alpha: 0.3),
+                    activeThumbColor: const Color(0xFFC5A059),
                     secondary: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -2199,7 +2200,8 @@ class _ProviderHomeState extends State<ProviderHome> {
                   // 2FA Toggle
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    activeColor: const Color(0xFFC5A059),
+                    activeTrackColor: const Color(0xFFC5A059).withValues(alpha: 0.3),
+                    activeThumbColor: const Color(0xFFC5A059),
                     secondary: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(

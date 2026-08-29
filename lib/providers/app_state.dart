@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+
+import '../models/user_model.dart';
 
 enum UserRole {
   none,
@@ -177,10 +180,20 @@ class AppState extends ChangeNotifier {
   UserRole _currentRole = UserRole.none;
   String? _currentUserEmail;
   String? _currentUserName;
+  UserModel? _currentUserModel;
 
   UserRole get currentRole => _currentRole;
   String? get currentUserEmail => _currentUserEmail;
   String? get currentUserName => _currentUserName;
+  UserModel? get currentUserModel => _currentUserModel;
+
+  void setUserModel(UserModel userModel) {
+    _currentUserModel = userModel;
+    _currentRole = userModel.role;
+    _currentUserEmail = userModel.email;
+    _currentUserName = userModel.fullName.isNotEmpty ? userModel.fullName : userModel.email.split('@')[0];
+    notifyListeners();
+  }
 
   // Provider Specific State
   bool _isProviderRegistrationComplete = false;
@@ -251,9 +264,26 @@ class AppState extends ChangeNotifier {
   List<Product> get marketplaceProducts => _marketplaceProducts;
   List<ShopOrder> get shopOrders => _shopOrders;
 
-  void addProduct(Product product) {
+  Future<void> addProduct(Product product) async {
     _marketplaceProducts.add(product);
     notifyListeners();
+
+    try {
+      final DatabaseReference ref = FirebaseDatabase.instance.ref('products');
+      await ref.child(product.id).set({
+        'id': product.id,
+        'name': product.name,
+        'price': product.price,
+        'originalPrice': product.originalPrice,
+        'iconName': product.iconName,
+        'shopkeeperId': product.shopkeeperId,
+        'category': product.category,
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+      debugPrint('Product saved to Firebase successfully!');
+    } catch (e) {
+      debugPrint('Error saving to Firebase: $e');
+    }
   }
 
   void removeProduct(String id) {
@@ -476,6 +506,7 @@ class AppState extends ChangeNotifier {
     _currentRole = UserRole.none;
     _currentUserEmail = null;
     _currentUserName = null;
+    _currentUserModel = null;
     _isProviderOnline = false;
     notifyListeners();
   }

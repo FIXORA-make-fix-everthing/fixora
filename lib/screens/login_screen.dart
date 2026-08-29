@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../services/auth_service.dart';
 import '../utils/translations.dart';
 import 'customer/customer_home.dart';
 import 'provider/provider_home.dart';
@@ -15,10 +16,14 @@ import 'language_selection_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final UserRole role;
+  final String? initialEmail;
+  final String? initialPassword;
 
   const LoginScreen({
     super.key,
     required this.role,
+    this.initialEmail,
+    this.initialPassword,
   });
 
   @override
@@ -29,14 +34,20 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  late UserRole _selectedRole;
 
   @override
   void initState() {
     super.initState();
+    _selectedRole = widget.role;
     // Pre-fill demo credentials for convenience
-    if (widget.role == UserRole.customer) {
+    if (widget.initialEmail != null && widget.initialPassword != null) {
+      _emailController.text = widget.initialEmail!;
+      _passwordController.text = widget.initialPassword!;
+    } else if (widget.role == UserRole.customer) {
       _emailController.text = 'customer@fixora.com';
       _passwordController.text = 'password123';
     } else if (widget.role == UserRole.shopKeeper) {
@@ -55,52 +66,51 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isLoading = true;
     });
 
-    // Simulate network delay
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (!mounted) return;
-      
-      final appState = Provider.of<AppState>(context, listen: false);
-      final success = appState.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-        widget.role,
-      );
+    final result = await _authService.signIn(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      selectedRole: _selectedRole,
+    );
 
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (success) {
-        // Clear backstack and go to main home
-        Widget destination;
-        if (widget.role == UserRole.customer) {
-          destination = const CustomerHome();
-        } else if (widget.role == UserRole.shopKeeper) {
-          destination = const ShopkeeperHome();
-        } else {
-          destination = const ProviderHome();
-        }
-        
-        Navigator.of(context).pushAndRemoveUntil(
-          RollingPageRoute(page: destination),
-          (route) => false,
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid credentials. Please try again.'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
     });
+
+    if (result.isSuccess && result.userModel != null) {
+      final userModel = result.userModel!;
+      final appState = Provider.of<AppState>(context, listen: false);
+      appState.setUserModel(userModel);
+
+      // Navigate to destination dashboard based on user's registered role
+      Widget destination;
+      if (userModel.role == UserRole.customer) {
+        destination = const CustomerHome();
+      } else if (userModel.role == UserRole.shopKeeper) {
+        destination = const ShopkeeperHome();
+      } else {
+        destination = const ProviderHome();
+      }
+      
+      Navigator.of(context).pushAndRemoveUntil(
+        RollingPageRoute(page: destination),
+        (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.errorMessage ?? 'Sign in failed. Please check your credentials.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   @override

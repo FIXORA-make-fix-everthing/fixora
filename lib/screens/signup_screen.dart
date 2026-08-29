@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/auth_service.dart';
 import '../providers/app_state.dart';
 import '../widgets/neumorphic_button.dart';
 import '../utils/page_transitions.dart';
-import 'otp_verification_screen.dart';
-
+import 'login_screen.dart';
 class SignupScreen extends StatefulWidget {
   final UserRole initialRole;
   
@@ -23,6 +23,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _locationController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+  final _authService = AuthService();
   
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
@@ -54,25 +55,48 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _handleSignup() {
+  void _handleSignup() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-    
-    // Mock delay 
-    Future.delayed(const Duration(seconds: 2), () {
+
+    final result = await _authService.signUp(
+      firstName: _firstNameController.text,
+      lastName: _lastNameController.text,
+      email: _emailController.text,
+      phone: _phoneController.text,
+      location: _locationController.text,
+      role: _selectedRole,
+      password: _passwordController.text,
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result.isSuccess && result.userModel != null) {
+      // User explicitly requested to go to sign-in page next
+      await _authService.signOut();
       if (!mounted) return;
-      setState(() => _isLoading = false);
-      
-      // Route to OTP Verification instead of popping
-      Navigator.of(context).push(
-        RollingPageRoute(
-          page: OtpVerificationScreen(
-            email: _emailController.text.trim().isEmpty ? "user@example.com" : _emailController.text.trim(),
-            role: _selectedRole,
-          ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created successfully! Please sign in.'),
+          backgroundColor: Colors.green,
         ),
       );
-    });
+      Navigator.of(context).pushReplacement(
+        RollingPageRoute(page: LoginScreen(
+          role: _selectedRole,
+          initialEmail: _emailController.text,
+          initialPassword: _passwordController.text,
+        )),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.errorMessage ?? 'Signup failed. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildRoleSelector() {
@@ -307,6 +331,36 @@ class _SignupScreenState extends State<SignupScreen> {
                             'Sign Up',
                             style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600, color: _themeColor == const Color(0xFFC0C0C0) ? Colors.black : Colors.white, letterSpacing: 1.5),
                           ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Already have an account? ',
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w300,
+                          color: const Color(0xFF888888),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pushReplacement(
+                            RollingPageRoute(page: LoginScreen(role: _selectedRole)),
+                          );
+                        },
+                        child: Text(
+                          'Sign In',
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: _themeColor,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 40),
                 ],

@@ -438,25 +438,56 @@ class _ProblemDescriptionScreenState extends State<ProblemDescriptionScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white10),
                   ),
-                  child: Row(
+                  child: _imageFile != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Stack(
+                            alignment: Alignment.topRight,
+                            children: [
+                              Image.file(
+                                _imageFile!,
+                                height: 200,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _imageFile = null;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.6),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, color: Colors.white, size: 18),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
-                          _imageFile != null 
-                              ? _imageFile!.path.split('/').last 
-                              : 'Upload img',
+                          'Upload img',
                           style: GoogleFonts.outfit(
-                            color: _imageFile != null ? Colors.white : Colors.white60,
+                            color: Colors.white60,
                             fontSize: 16,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Icon(
-                        _imageFile != null ? Icons.check_circle_rounded : Icons.keyboard_arrow_down_rounded, 
-                        color: _imageFile != null ? electricBlue : Colors.white
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded, 
+                        color: Colors.white
                       ),
                     ],
                   ),

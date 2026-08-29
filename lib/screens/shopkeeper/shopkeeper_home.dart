@@ -940,7 +940,7 @@ class _ShopkeeperHomeState extends State<ShopkeeperHome> {
                   icon: const Icon(Icons.add, color: Colors.black, size: 28),
                   onPressed: _showAddProductDialog,
                 ),
-              ),
+                ),
             ],
           ),
         ),

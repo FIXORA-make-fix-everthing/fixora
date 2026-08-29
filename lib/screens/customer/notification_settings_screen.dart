@@ -61,7 +61,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           Switch(
             value: value,
             onChanged: _allNotifications || title == 'Allow All Notifications' ? onChanged : null,
-            activeColor: const Color(0xFFFF5A00),
+            activeThumbColor: const Color(0xFFFF5A00),
             activeTrackColor: const Color(0xFFFF5A00).withValues(alpha: 0.3),
             inactiveThumbColor: Colors.grey[400],
             inactiveTrackColor: Colors.grey[800],

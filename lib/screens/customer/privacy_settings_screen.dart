@@ -52,7 +52,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: const Color(0xFF00E5FF),
+            activeThumbColor: const Color(0xFF00E5FF),
             activeTrackColor: const Color(0xFF00E5FF).withValues(alpha: 0.3),
             inactiveThumbColor: Colors.grey[400],
             inactiveTrackColor: Colors.grey[800],

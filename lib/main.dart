@@ -5,9 +5,26 @@ import 'providers/app_state.dart';
 import 'screens/splash_screen.dart';
 import 'utils/app_colors.dart';
 
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+import 'utils/globals.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+  } catch (e) {
+    debugPrint("Firebase initialization error: $e");
+  }
+  
+  // Removed persistence override to allow default caching
+  // This prevents [cloud_firestore/unavailable] errors on flaky networks
   // Set status bar to transparent / dark overlay
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
@@ -31,6 +48,7 @@ class FixoraApp extends StatelessWidget {
       builder: (context, appState, child) {
         final primary = AppColors.getRoleColor(appState.currentRole);
         return MaterialApp(
+          navigatorKey: navigatorKey,
           title: 'Fixora',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(

@@ -6,9 +6,9 @@ import 'problem_description_screen.dart';
 
 class VehicleItem {
   final String name;
-  final IconData icon;
+  final String imagePath;
 
-  VehicleItem(this.name, this.icon);
+  VehicleItem(this.name, this.imagePath);
 }
 
 class VehicleScreen extends StatefulWidget {
@@ -22,16 +22,16 @@ class _VehicleScreenState extends State<VehicleScreen> {
   int _selectedIndex = -1;
 
   final List<VehicleItem> vehicles = [
-    VehicleItem('Bus', Icons.directions_bus_rounded),
-    VehicleItem('Car', Icons.directions_car_rounded),
-    VehicleItem('Scooter', Icons.moped_rounded),
-    VehicleItem('Motor cycle', Icons.motorcycle_rounded),
-    VehicleItem('van', Icons.airport_shuttle_rounded),
-    VehicleItem('Bicycle', Icons.directions_bike_rounded),
-    VehicleItem('Tractor', Icons.agriculture_rounded),
-    VehicleItem('Jeep', Icons.time_to_leave_rounded),
-    VehicleItem('Truck', Icons.local_shipping_rounded),
-    VehicleItem('Auto', Icons.electric_rickshaw_rounded),
+    VehicleItem('Bus', 'assets/images/vehicles/bus_3d.png'),
+    VehicleItem('Car', 'assets/images/vehicles/car_3d.png'),
+    VehicleItem('Scooter', 'assets/images/vehicles/scooter_3d.png'),
+    VehicleItem('Motor cycle', 'assets/images/vehicles/motorcycle_3d.png'),
+    VehicleItem('Van', 'assets/images/vehicles/van_3d.png'),
+    VehicleItem('Bicycle', 'assets/images/vehicles/bicycle_3d.png'),
+    VehicleItem('Tractor', 'assets/images/vehicles/tractor_3d.png'),
+    VehicleItem('Jeep', 'assets/images/vehicles/jeep_3d.png'),
+    VehicleItem('Truck', 'assets/images/vehicles/truck_3d.png'),
+    VehicleItem('Auto', 'assets/images/vehicles/auto_rickshaw_3d.png'),
   ];
 
   @override
@@ -113,12 +113,12 @@ class _VehicleScreenState extends State<VehicleScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            item.icon,
-                            size: 48,
-                            color: isSelected 
-                                ? const Color(0xFF39FF14) // Electric green icon when selected
-                                : Colors.white,
+                          Image.asset(
+                            item.imagePath,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.contain,
+                            color: isSelected ? const Color(0xFF39FF14) : null,
                           ),
                           const SizedBox(height: 12),
                           Text(

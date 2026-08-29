@@ -250,41 +250,69 @@ class _AuthSelectionScreenState extends State<AuthSelectionScreen> with SingleTi
                       ),
                     ),
                     
-                    // Create an Account Button
+                    // Action Buttons (Sign In & Sign Up)
                     _buildAnimatedItem(
                       index: 6, totalItems: 7,
-                      child: GestureDetector(
-                        onTap: _navigateToSignUp,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFC0C0C0), Color(0xFFFF5A00)], // Silver to Orange
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFFF5A00).withValues(alpha: 0.5),
-                                blurRadius: 24,
-                                spreadRadius: 2,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Create an Account',
-                              style: GoogleFonts.outfit(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: _navigateToLogin,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFFF5A00), width: 1.5),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Sign In',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFFFF5A00),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: _navigateToSignUp,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFFC0C0C0), Color(0xFFFF5A00)],
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFFF5A00).withValues(alpha: 0.4),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Sign Up',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

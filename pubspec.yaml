@@ -46,6 +46,12 @@ dependencies:
   confetti: ^0.8.0
   flutter_map: ^8.3.0
   latlong2: ^0.9.1
+  firebase_core: ^4.11.0
+  firebase_auth: ^6.5.4
+  cloud_firestore: ^6.6.0
+  http: ^1.6.0
+  flutter_secure_storage: ^9.2.2
+  firebase_database: ^12.5.0
 
 dev_dependencies:
   flutter_test:
@@ -80,9 +86,13 @@ flutter:
     - assets/images/fixora.png
     - assets/images/splash.mp4
     # - assets/images/fixora_bg.png
-    - assets/images/language_bg.png  
+    # - assets/images/language_bg.png  
     - assets/images/image.png
     - assets/images/selectid.mp4
+    - assets/images/3d_icons/
+    - assets/images/appliances/
+    - assets/images/vehicles/
+    - assets/images/others/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
