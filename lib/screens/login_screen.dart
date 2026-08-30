@@ -43,19 +43,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _selectedRole = widget.role;
-    // Pre-fill demo credentials for convenience
     if (widget.initialEmail != null && widget.initialPassword != null) {
       _emailController.text = widget.initialEmail!;
       _passwordController.text = widget.initialPassword!;
-    } else if (widget.role == UserRole.customer) {
-      _emailController.text = 'customer@fixora.com';
-      _passwordController.text = 'password123';
-    } else if (widget.role == UserRole.shopKeeper) {
-      _emailController.text = 'shopkeeper@fixora.com';
-      _passwordController.text = 'password123';
-    } else {
-      _emailController.text = 'provider@fixora.com';
-      _passwordController.text = 'password123';
     }
   }
 
@@ -388,50 +378,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                 ),
                                 const SizedBox(height: 24),
-                                // Demo accounts indicator alert inside the card
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: themeColor.withValues(alpha: 0.05),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: themeColor.withValues(alpha: 0.15),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(Icons.info_outline_rounded, color: themeColor, size: 16),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            Translations.getText(context, 'demo_mode'),
-                                            style: GoogleFonts.outfit(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w600,
-                                              color: themeColor,
-                                              letterSpacing: 1,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        isCustomer
-                                            ? Translations.getText(context, 'demo_customer_desc')
-                                            : isShopKeeper
-                                                ? Translations.getText(context, 'demo_shop_desc')
-                                                : Translations.getText(context, 'demo_provider_desc'),
-                                        style: GoogleFonts.outfit(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w300,
-                                          color: Colors.white70,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                // Demo accounts indicator alert inside the card removed
                                 const SizedBox(height: 32),
                                 // Sign up section
                                 Row(

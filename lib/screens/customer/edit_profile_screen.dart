@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:provider/provider.dart';
+import '../../providers/app_state.dart';
+
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -9,11 +12,23 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final TextEditingController _nameController = TextEditingController(text: "John Doe");
-  final TextEditingController _emailController = TextEditingController(text: "customer@fixora.com");
-  final TextEditingController _phoneController = TextEditingController(text: "+91 9876543210");
-  final TextEditingController _addressController = TextEditingController(text: "123, Anna Nagar");
-  final TextEditingController _locationController = TextEditingController(text: "Chennai, Tamil Nadu");
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+  late TextEditingController _phoneController;
+  late TextEditingController _addressController;
+  late TextEditingController _locationController;
+
+  @override
+  void initState() {
+    super.initState();
+    final appState = Provider.of<AppState>(context, listen: false);
+    final user = appState.currentUserModel;
+    _nameController = TextEditingController(text: user?.fullName ?? "John Doe");
+    _emailController = TextEditingController(text: user?.email ?? "customer@fixora.com");
+    _phoneController = TextEditingController(text: user?.phone ?? "+91 9876543210");
+    _addressController = TextEditingController(text: "123, Anna Nagar"); // Assuming address is not in UserModel yet
+    _locationController = TextEditingController(text: user?.location ?? "Chennai, Tamil Nadu");
+  }
 
   @override
   void dispose() {

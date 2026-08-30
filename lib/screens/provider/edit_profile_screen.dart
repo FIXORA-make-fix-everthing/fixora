@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
+import 'package:provider/provider.dart';
+import '../../providers/app_state.dart';
+
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -15,11 +18,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   XFile? _pickedProfilePhoto;
   final ImagePicker _picker = ImagePicker();
 
-  final TextEditingController _nameController = TextEditingController(text: "Alex Mercer");
-  final TextEditingController _phoneController = TextEditingController(text: "+1 (555) 987-6543");
-  final TextEditingController _emailController = TextEditingController(text: "alex.mercer@example.com");
-  final TextEditingController _experienceController = TextEditingController(text: "5 Years");
-  final TextEditingController _bioController = TextEditingController(text: "Certified technician specializing in AC and Auto repair. Providing top-tier service across the city.");
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
+  late TextEditingController _emailController;
+  late TextEditingController _experienceController;
+  late TextEditingController _bioController;
+
+  @override
+  void initState() {
+    super.initState();
+    final appState = Provider.of<AppState>(context, listen: false);
+    final user = appState.currentUserModel;
+    _nameController = TextEditingController(text: user?.fullName ?? "Alex Mercer");
+    _phoneController = TextEditingController(text: user?.phone ?? "+1 (555) 987-6543");
+    _emailController = TextEditingController(text: user?.email ?? "alex.mercer@example.com");
+    _experienceController = TextEditingController(text: "5 Years"); // Assuming experience is not in UserModel yet
+    _bioController = TextEditingController(text: "Certified technician specializing in AC and Auto repair.");
+  }
 
   @override
   void dispose() {
