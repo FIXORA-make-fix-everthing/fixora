@@ -15,6 +15,7 @@ import '../language_selection_screen.dart';
 import 'about_screen.dart';
 import 'privacy_settings_screen.dart';
 import '../provider/marketplace_screen.dart';
+import '../../widgets/sos_button.dart';
 
 class CustomerHome extends StatefulWidget {
   const CustomerHome({super.key});
@@ -46,6 +47,7 @@ class _CustomerHomeState extends State<CustomerHome> {
         body: SafeArea(
           child: tabs[_currentIndex],
         ),
+        floatingActionButton: const SosButton(),
         bottomNavigationBar: Container(
           margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
           height: 65,

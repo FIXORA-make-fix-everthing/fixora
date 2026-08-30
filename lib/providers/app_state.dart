@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../models/user_model.dart';
+import '../services/sos_service.dart';
 
 enum UserRole {
   none,
@@ -28,6 +31,7 @@ class Booking {
   final String address;
   final String customerName;
   BookingStatus status;
+  String? providerId;
   String? providerName;
   String? providerPhone;
   double? providerRating;
@@ -42,6 +46,7 @@ class Booking {
     required this.address,
     required this.customerName,
     this.status = BookingStatus.findingProvider,
+    this.providerId,
     this.providerName,
     this.providerPhone,
     this.providerRating,
@@ -138,6 +143,8 @@ class ShopOrder {
 
 
 class AppState extends ChangeNotifier {
+  final SosService _sosService = SosService();
+
   // Country & Currency State
   final List<CountryData> availableCountries = [
     CountryData(code: 'IN', name: 'India', currencySymbol: '₹', exchangeRate: 83.50, flag: '🇮🇳'),
@@ -515,11 +522,50 @@ class AppState extends ChangeNotifier {
   void toggleProviderOnline() {
     _isProviderOnline = !_isProviderOnline;
     notifyListeners();
+    
+    final providerId = _currentUserEmail?.replaceAll('.', '_') ?? 'unknown_provider';
+    final DatabaseReference locRef = FirebaseDatabase.instance.ref('providers/$providerId/location');
+    
+    // Update online status in Firebase
+    locRef.update({
+      'isOnline': _isProviderOnline,
+    });
   }
 
-  void toggleGpsTracking() {
+  StreamSubscription<Position>? _providerLocationStream;
+
+  void toggleGpsTracking() async {
     _isGpsTrackingOn = !_isGpsTrackingOn;
     notifyListeners();
+
+    final providerId = _currentUserEmail?.replaceAll('.', '_') ?? 'unknown_provider';
+    final DatabaseReference locRef = FirebaseDatabase.instance.ref('providers/$providerId/location');
+
+    if (_isGpsTrackingOn) {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      if (permission == LocationPermission.deniedForever) return;
+
+      _providerLocationStream = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 10),
+      ).listen((Position position) {
+        locRef.set({
+          'lat': position.latitude,
+          'lng': position.longitude,
+          'timestamp': DateTime.now().toIso8601String(),
+          'isOnline': _isProviderOnline,
+          'name': _currentUserName,
+        });
+      });
+    } else {
+      _providerLocationStream?.cancel();
+      locRef.remove();
+    }
   }
 
   void updateProviderSkills(List<String> newSkills) {
@@ -528,16 +574,19 @@ class AppState extends ChangeNotifier {
   }
 
   // Booking actions
-  void createBooking({
+  Future<void> createBooking({
     required String categoryName,
     required String serviceName,
     required double price,
     required String date,
     required String timeSlot,
     required String address,
-  }) {
+  }) async {
+    final bookingId = 'FX-${(1000 + _bookings.length * 3 + 17).toString()}';
+    final customerId = _currentUserEmail?.replaceAll('.', '_') ?? 'unknown_customer';
+    
     final newBooking = Booking(
-      id: 'FX-${(1000 + _bookings.length * 3 + 17).toString()}',
+      id: bookingId,
       category: categoryName,
       serviceName: serviceName,
       price: price,
@@ -548,8 +597,88 @@ class AppState extends ChangeNotifier {
       status: BookingStatus.findingProvider,
     );
     
-    _bookings.insert(0, newBooking); // Insert at beginning of list
+    _bookings.insert(0, newBooking); // Insert locally
     notifyListeners();
+
+    try {
+      // 1. Get customer location
+      final customerPos = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+
+      // 2. Query all providers from Firebase
+      final DatabaseReference providersRef = FirebaseDatabase.instance.ref('providers');
+      final snapshot = await providersRef.get();
+      
+      String? closestProviderId;
+      double minDistance = double.infinity;
+
+      if (snapshot.exists) {
+        final providers = snapshot.value as Map<dynamic, dynamic>;
+        
+        providers.forEach((provId, data) {
+          if (data['location'] != null) {
+            final loc = data['location'];
+            final isOnline = loc['isOnline'] ?? false;
+            
+            if (isOnline) {
+              final double provLat = (loc['lat'] as num).toDouble();
+              final double provLng = (loc['lng'] as num).toDouble();
+              
+              final distance = Geolocator.distanceBetween(
+                customerPos.latitude, customerPos.longitude,
+                provLat, provLng
+              );
+              
+              if (distance < minDistance) {
+                minDistance = distance;
+                closestProviderId = provId;
+              }
+            }
+          }
+        });
+      }
+
+      // 3. Dispatch to the closest provider
+      if (closestProviderId != null) {
+        debugPrint('Dispatching to closest provider: $closestProviderId (Distance: ${minDistance.toStringAsFixed(0)}m)');
+        
+        final reqRef = FirebaseDatabase.instance.ref('providers/$closestProviderId/requests/$bookingId');
+        await reqRef.set({
+          'bookingId': bookingId,
+          'customerId': customerId,
+          'customerName': newBooking.customerName,
+          'serviceName': serviceName,
+          'address': address,
+          'price': price,
+          'status': 'pending',
+          'timestamp': DateTime.now().toIso8601String(),
+        });
+        
+        // Listen to this specific request for acceptance
+        reqRef.onValue.listen((event) {
+          if (event.snapshot.exists) {
+            final data = event.snapshot.value as Map<dynamic, dynamic>;
+            if (data['status'] == 'accepted') {
+              // Provider accepted!
+              final bookingIndex = _bookings.indexWhere((b) => b.id == bookingId);
+              if (bookingIndex != -1) {
+                _bookings[bookingIndex].status = BookingStatus.providerAssigned;
+                _bookings[bookingIndex].providerId = closestProviderId;
+                _bookings[bookingIndex].providerName = data['providerName'] ?? 'Technician';
+                _bookings[bookingIndex].providerPhone = data['providerPhone'] ?? '+1 555-0000';
+                _bookings[bookingIndex].providerRating = 5.0;
+                notifyListeners();
+              }
+            }
+          }
+        });
+        
+      } else {
+        debugPrint('No online providers found nearby.');
+      }
+      
+    } catch (e) {
+      debugPrint('Error dispatching booking: $e');
+    }
   }
 
   void acceptBooking(String bookingId) {
@@ -560,6 +689,15 @@ class AppState extends ChangeNotifier {
       _bookings[bookingIndex].providerPhone = "+1 (555) 302-8841";
       _bookings[bookingIndex].providerRating = 4.95;
       notifyListeners();
+      
+      // Update Firebase if this is a live request
+      final providerId = _currentUserEmail?.replaceAll('.', '_') ?? 'unknown_provider';
+      final reqRef = FirebaseDatabase.instance.ref('providers/$providerId/requests/$bookingId');
+      reqRef.update({
+        'status': 'accepted',
+        'providerName': _bookings[bookingIndex].providerName,
+        'providerPhone': _bookings[bookingIndex].providerPhone,
+      });
     }
   }
 
@@ -579,5 +717,31 @@ class AppState extends ChangeNotifier {
       }
       notifyListeners();
     }
+  }
+
+  // SOS State
+  bool _isSosActive = false;
+  bool get isSosActive => _isSosActive;
+
+  Future<void> triggerSos() async {
+    _isSosActive = true;
+    notifyListeners();
+
+    final success = await _sosService.sendSosAlert(
+      userEmail: _currentUserEmail ?? 'unknown_user',
+      location: 'Current GPS Coordinates (Mocked)',
+    );
+
+    if (success) {
+      // Keep it active or handle success logic
+    } else {
+      _isSosActive = false; // revert if failed
+      notifyListeners();
+    }
+  }
+
+  void cancelSos() {
+    _isSosActive = false;
+    notifyListeners();
   }
 }

@@ -1,5 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:firebase_database/firebase_database.dart';
 import '../../providers/app_state.dart';
 
 class LiveTrackingScreen extends StatefulWidget {
@@ -14,9 +19,21 @@ class LiveTrackingScreen extends StatefulWidget {
   State<LiveTrackingScreen> createState() => _LiveTrackingScreenState();
 }
 
+enum MapStyle { dark, satellite }
+
 class _LiveTrackingScreenState extends State<LiveTrackingScreen> with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  
+  final MapController _mapController = MapController();
+  
+  // Real coordinates from GPS
+  LatLng? _myLocation;
+  LatLng? _providerLocation; // No longer hardcoded
+
+  
+  StreamSubscription<Position>? _positionStream;
+  MapStyle _currentMapStyle = MapStyle.dark;
 
   @override
   void initState() {
@@ -29,10 +46,78 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> with SingleTick
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+    
+    _startLiveTracking();
+  }
+  
+  Future<void> _startLiveTracking() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Test if location services are enabled.
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+    
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error('Location permissions are permanently denied, we cannot request permissions.');
+    } 
+
+    // Get initial position
+    final position = await Geolocator.getCurrentPosition();
+    setState(() {
+      _myLocation = LatLng(position.latitude, position.longitude);
+    });
+
+    // Listen for live updates
+    _positionStream = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10, // update every 10 meters
+      ),
+    ).listen((Position pos) {
+      if (mounted) {
+        setState(() {
+          _myLocation = LatLng(pos.latitude, pos.longitude);
+        });
+      }
+    });
+
+    // Listen to provider location from Firebase if assigned
+    if (widget.booking.providerId != null) {
+      FirebaseDatabase.instance
+          .ref('providers/${widget.booking.providerId}/location')
+          .onValue
+          .listen((event) {
+        if (event.snapshot.exists) {
+          final data = event.snapshot.value as Map<dynamic, dynamic>;
+          if (data['lat'] != null && data['lng'] != null) {
+            if (mounted) {
+              setState(() {
+                _providerLocation = LatLng(
+                  (data['lat'] as num).toDouble(),
+                  (data['lng'] as num).toDouble(),
+                );
+              });
+            }
+          }
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _positionStream?.cancel();
     _pulseController.dispose();
     super.dispose();
   }
@@ -43,62 +128,127 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> with SingleTick
       backgroundColor: const Color(0xFF0F0F0F),
       body: Stack(
         children: [
-          // Mock Map Background
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _MockMapPainter(),
-            ),
-          ),
-
-          // Map Route Line Mock
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _MockRoutePainter(),
-            ),
-          ),
-
-          // Origin Marker (Home)
-          Positioned(
-            bottom: MediaQuery.of(context).size.height * 0.4,
-            left: MediaQuery.of(context).size.width * 0.5 - 20,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFFF5A00).withValues(alpha: 0.2),
-                border: Border.all(color: const Color(0xFFFF5A00), width: 2),
+          // Real Map using flutter_map
+          if (_myLocation == null)
+            const Center(child: CircularProgressIndicator(color: Color(0xFFFF5A00)))
+          else
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _myLocation!,
+                initialZoom: 15.0,
               ),
-              child: const Icon(Icons.home_rounded, color: Color(0xFFFF5A00), size: 20),
-            ),
-          ),
-
-          // Provider Marker (Car moving)
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.35,
-            right: MediaQuery.of(context).size.width * 0.3,
-            child: ScaleTransition(
-              scale: _pulseAnimation,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      spreadRadius: 2,
+              children: [
+                if (_currentMapStyle == MapStyle.dark)
+                  ColorFiltered(
+                    colorFilter: const ColorFilter.matrix([
+                      -1,  0,  0, 0, 255, // Red (invert)
+                       0, -1,  0, 0, 255, // Green (invert)
+                       0,  0, -1, 0, 255, // Blue (invert)
+                       0,  0,  0, 1,   0, // Alpha
+                    ]),
+                    child: TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.example.fixora',
                     ),
+                  )
+                else
+                  TileLayer(
+                    urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                    userAgentPackageName: 'com.example.fixora',
+                  ),
+                if (_providerLocation != null)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: [_providerLocation!, _myLocation!],
+                        color: const Color(0xFFFF5A00),
+                        strokeWidth: 4.0,
+                      ),
+                    ],
+                  ),
+                MarkerLayer(
+                  markers: [
+                    // My Marker
+                    Marker(
+                      point: _myLocation!,
+                      width: 40,
+                      height: 40,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFFFF5A00).withValues(alpha: 0.2),
+                          border: Border.all(color: const Color(0xFFFF5A00), width: 2),
+                        ),
+                        child: const Icon(Icons.my_location, color: Color(0xFFFF5A00), size: 20),
+                      ),
+                    ),
+                    // Provider Marker
+                    if (_providerLocation != null)
+                      Marker(
+                        point: _providerLocation!,
+                        width: 44,
+                        height: 44,
+                        child: ScaleTransition(
+                          scale: _pulseAnimation,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Icon(Icons.directions_car_rounded, color: Colors.black, size: 24),
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-                child: const Center(
-                  child: Icon(Icons.directions_car_rounded, color: Colors.black, size: 24),
-                ),
+              ],
+            ),
+
+          // Re-center & Map Style Buttons
+          if (_myLocation != null)
+            Positioned(
+              bottom: 300, // Above the bottom card
+              right: 20,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FloatingActionButton(
+                    mini: true,
+                    backgroundColor: const Color(0xFF141414),
+                    child: Icon(
+                      _currentMapStyle == MapStyle.dark ? Icons.satellite_alt_rounded : Icons.map_rounded,
+                      color: const Color(0xFFFF5A00),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _currentMapStyle = _currentMapStyle == MapStyle.dark
+                            ? MapStyle.satellite
+                            : MapStyle.dark;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  FloatingActionButton(
+                    mini: true,
+                    backgroundColor: const Color(0xFF141414),
+                    child: const Icon(Icons.my_location, color: Color(0xFFFF5A00)),
+                    onPressed: () {
+                      _mapController.move(_myLocation!, 15.0);
+                    },
+                  ),
+                ],
               ),
             ),
-          ),
 
           // Top App Bar Area
           Positioned(
@@ -325,54 +475,3 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> with SingleTick
   }
 }
 
-// Custom Painter to draw a mocked grid to simulate a map
-class _MockMapPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.03)
-      ..strokeWidth = 1;
-
-    for (double i = 0; i < size.width; i += 40) {
-      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
-    }
-    for (double i = 0; i < size.height; i += 40) {
-      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// Custom Painter to draw a mocked route line
-class _MockRoutePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFFF5A00)
-      ..strokeWidth = 4
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path();
-    // Start at Provider
-    path.moveTo(size.width * 0.7, size.height * 0.35 + 20);
-    // Draw a curvy path to Home
-    path.quadraticBezierTo(size.width * 0.5, size.height * 0.45, size.width * 0.5, size.height * 0.6);
-
-    // Draw shadow/glow behind the line
-    final glowPaint = Paint()
-      ..color = const Color(0xFFFF5A00).withValues(alpha: 0.3)
-      ..strokeWidth = 10
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
-
-    canvas.drawPath(path, glowPaint);
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
